@@ -1,4 +1,6 @@
+using System.Data;
 using System.Text.RegularExpressions;
+using Medallion.Threading.Postgres;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UserApiTestTaskVk.Application.Common.Interfaces;
@@ -15,23 +17,38 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, SignUpRespons
 {
 	private readonly IApplicationDbContext _context;
 	private readonly IPasswordService _passwordService;
+	private readonly IDbConnection _dbConnection;
 
 	/// <summary>
 	/// Конструктор
 	/// </summary>
 	/// <param name="context">Контекст БД</param>
 	/// <param name="passwordService">Сервис паролей</param>
+	/// <param name="dbConnection"></param>
 	public SignUpCommandHandler(
 		IApplicationDbContext context,
-		IPasswordService passwordService)
+		IPasswordService passwordService,
+		IDbConnection dbConnection)
 	{
 		_context = context;
 		_passwordService = passwordService;
+		_dbConnection = dbConnection;
 	}
 
 	/// <inheritdoc/>
 	public async Task<SignUpResponse> Handle(SignUpCommand request, CancellationToken cancellationToken)
 	{
+		var @lock = new PostgresDistributedLock(
+			new PostgresAdvisoryLockKey(
+				$"user_{request.Login}",
+				allowHashing: true),
+			_dbConnection);
+
+		await using var handle = await @lock.TryAcquireAsync(TimeSpan.Zero, cancellationToken);
+
+		if (handle == null)
+			throw new ValidationProblem("Пользователь с таким логином уже создается");
+
 		var isLoginUnique = await _context.Users
 			.AllAsync(x => x.Login != request.Login, cancellationToken);
 
@@ -46,9 +63,13 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, SignUpRespons
 		var user = new User(
 			login: request.Login,
 			passwordHash: passwordHash,
-			passwordSalt: passwordSalt);
+			passwordSalt: passwordSalt,
+			userGroup: _context.DefaultUserGroup,
+			userState: _context.ActiveUserState);
 
 		await _context.Users.AddAsync(user, cancellationToken);
+
+		await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
 		await _context.SaveChangesAsync(cancellationToken);
 
 		return new SignUpResponse()

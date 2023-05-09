@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using UserApiTestTaskVk.Domain.Entities;
-using UserApiTestTaskVk.Domain.InitialEntities;
+using UserApiTestTaskVk.Infrastructure.InitExecutors;
 using UserApiTestTaskVk.Infrastructure.Persistence.Common;
 
 namespace UserApiTestTaskVk.Infrastructure.Persistence.Configurations;

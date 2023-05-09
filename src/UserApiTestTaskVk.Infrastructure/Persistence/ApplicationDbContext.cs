@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using UserApiTestTaskVk.Application.Common.Interfaces;
 using UserApiTestTaskVk.Domain.Entities;
 using UserApiTestTaskVk.Domain.Entities.Common;
-using UserApiTestTaskVk.Domain.InitialEntities;
+using UserApiTestTaskVk.Infrastructure.InitExecutors;
 
 namespace UserApiTestTaskVk.Infrastructure.Persistence;
 
@@ -11,22 +11,18 @@ namespace UserApiTestTaskVk.Infrastructure.Persistence;
 /// </summary>
 public class ApplicationDbContext : DbContext, IApplicationDbContext
 {
-	private readonly IAuthorizationService _authorizationService;
 	private readonly IDateTimeProvider _dateTimeProvider;
 
 	/// <summary>
 	/// Конструктор
 	/// </summary>
 	/// <param name="options">Опции контекста</param>
-	/// <param name="authorizationService">Сервис авторизации</param>
 	/// <param name="dateTimeProvider">Провайдер даты и времени</param>
 	public ApplicationDbContext(
 		DbContextOptions<ApplicationDbContext> options,
-		IAuthorizationService authorizationService,
 		IDateTimeProvider dateTimeProvider)
 		: base(options)
 	{
-		_authorizationService = authorizationService;
 		_dateTimeProvider = dateTimeProvider;
 
 		AttachInitialEntitiesToContext();
@@ -56,7 +52,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 	public DbSet<RefreshToken> RefreshTokens { get; private set; } = default!;
 
 	/// <inheritdoc/>
-	protected override void OnModelCreating(ModelBuilder modelBuilder) 
+	protected override void OnModelCreating(ModelBuilder modelBuilder)
 		=> modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
 
 	/// <inheritdoc/>
@@ -88,12 +84,6 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 	/// <param name="withSoftDelete">Использовать мягкое удаление</param>
 	private void HandleSaveChangesLogic(bool withSoftDelete)
 	{
-		if (!_authorizationService.IsAuthenticated())
-		{
-			HandleRefreshTokenAddingAndRemovingWhenSignIn();
-			return;
-		}
-
 		HandleEntityBaseCreatedMetadata();
 
 		HandleUserSoftDelete();
@@ -102,37 +92,6 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 			return;
 
 		HandleSoftDelete();
-	}
-
-	/// <summary>
-	/// Обработать refresh токены при аутентификации
-	/// (их добавлении и удалении при привышении лимита)
-	/// </summary>
-	private void HandleRefreshTokenAddingAndRemovingWhenSignIn()
-	{
-		var refreshTokens = ChangeTracker.Entries<RefreshToken>();
-
-		if (refreshTokens?.Any() == true)
-		{
-			var refreshTokenToAdd = refreshTokens
-				.Where(c => c.State == EntityState.Added)
-				.SingleOrDefault();
-
-			if (refreshTokenToAdd is null)
-				return;
-
-			refreshTokenToAdd.Entity.CreatedDate = _dateTimeProvider.UtcNow;
-
-			var refreshTokenToRemove = refreshTokens
-				.Where(c => c.State == EntityState.Deleted)
-				.SingleOrDefault();
-
-			if (refreshTokenToRemove is not null)
-			{
-				refreshTokenToRemove.Entity.RevokedOn = _dateTimeProvider.UtcNow;
-				refreshTokenToRemove.State = EntityState.Modified;
-			}
-		}
 	}
 
 	/// <summary>
@@ -164,7 +123,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 
 		foreach (var entry in deleteUserChangeSet)
 		{
-			entry.Entity.Block();
+			entry.Entity.UserState = BlockedUserState;
 			entry.State = EntityState.Modified;
 		}
 	}
@@ -191,7 +150,19 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 	/// </summary>
 	private void AttachInitialEntitiesToContext()
 	{
-		UserGroups.AttachRange(ConstEntities.AdminUserGroup, ConstEntities.DefaultUserGroup);
-		UserStates.AttachRange(ConstEntities.ActiveUserState, ConstEntities.BlockedUserState);
+		UserGroups.AttachRange(AdminUserGroup, DefaultUserGroup);
+		UserStates.AttachRange(ActiveUserState, BlockedUserState);
 	}
+
+	/// <inheritdoc/>
+	public UserGroup AdminUserGroup { get; } = ConstEntities.AdminUserGroup;
+
+	/// <inheritdoc/>
+	public UserGroup DefaultUserGroup { get; } = ConstEntities.DefaultUserGroup;
+
+	/// <inheritdoc/>
+	public UserState ActiveUserState { get; } = ConstEntities.ActiveUserState;
+
+	/// <inheritdoc/>
+	public UserState BlockedUserState { get; } = ConstEntities.BlockedUserState;
 }
