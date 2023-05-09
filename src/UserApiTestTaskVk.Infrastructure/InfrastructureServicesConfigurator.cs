@@ -1,3 +1,4 @@
+using System.Data;
 using System.Text;
 using HostInitActions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -5,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 using UserApiTestTaskVk.Application.Common.Extensions;
 using UserApiTestTaskVk.Application.Common.Interfaces;
 using UserApiTestTaskVk.Infrastructure.Configs;
@@ -84,7 +86,16 @@ public static class InfrastructureServicesConfigurator
 				opt.UseSnakeCaseNamingConvention();
 			});
 
-		return services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
+		services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
+
+		services.AddTransient<IDbConnection>(_ =>
+		{
+			var dbConnection = new NpgsqlConnection(connString);
+			dbConnection.Open();
+			return dbConnection;
+		});
+
+		return services;
 	}
 
 	/// <summary>

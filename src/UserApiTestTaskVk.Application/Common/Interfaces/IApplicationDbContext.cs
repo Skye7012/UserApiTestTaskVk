@@ -6,7 +6,7 @@ namespace UserApiTestTaskVk.Application.Common.Interfaces;
 /// <summary>
 /// Интерфейс контекста БД данного приложения
 /// </summary>
-public interface IApplicationDbContext : IDbContext
+public interface IApplicationDbContext : IDbContext, IHaveConstEntities
 {
 	/// <summary>
 	/// Пользователи

@@ -1,7 +1,6 @@
 using System.Text.RegularExpressions;
 using UserApiTestTaskVk.Domain.Entities.Common;
 using UserApiTestTaskVk.Domain.Exceptions;
-using UserApiTestTaskVk.Domain.InitialEntities;
 
 namespace UserApiTestTaskVk.Domain.Entities;
 
@@ -31,17 +30,21 @@ public class User : EntityBase
 	/// <param name="login">Логин</param>
 	/// <param name="passwordHash">Хэш пароля</param>
 	/// <param name="passwordSalt">Соль пароля</param>
+	/// <param name="userGroup">Группа пользователя</param>
+	/// <param name="userState">Статус пользователя</param>
 	public User(
 		string login,
 		byte[] passwordHash,
-		byte[] passwordSalt)
+		byte[] passwordSalt,
+		UserGroup userGroup,
+		UserState userState)
 	{
 		Login = login;
 		PasswordHash = passwordHash;
 		PasswordSalt = passwordSalt;
 
-		UserGroup = ConstEntities.DefaultUserGroup;
-		UserState = ConstEntities.ActiveUserState;
+		UserGroup = userGroup;
+		UserState = userState;
 
 		_refreshTokens = new List<RefreshToken>();
 	}
@@ -90,12 +93,6 @@ public class User : EntityBase
 	public Guid UserStateId { get; private set; }
 
 	/// <summary>
-	/// Удалить пользователя
-	/// </summary>
-	public void Block()
-		=> UserState = ConstEntities.BlockedUserState;
-
-	/// <summary>
 	/// Деактивировать все refresh токены
 	/// </summary>
 	public void RevokeAllRefreshTokens()
@@ -129,12 +126,12 @@ public class User : EntityBase
 	/// <summary>
 	/// Группа пользователя
 	/// </summary>
-	public UserGroup? UserGroup { get; protected set; }
+	public UserGroup? UserGroup { get; set; }
 
 	/// <summary>
 	/// Статус пользователя
 	/// </summary>
-	public UserState? UserState { get; protected set; }
+	public UserState? UserState { get; set; }
 
 	/// <summary>
 	/// Refresh токены

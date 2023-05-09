@@ -44,7 +44,6 @@ public class AuthorizationController : ControllerBase
 		SignUpRequest request,
 		CancellationToken cancellationToken)
 	{
-
 		var response = await _mediator.Send(
 			new SignUpCommand
 			{

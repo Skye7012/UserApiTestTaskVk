@@ -36,12 +36,12 @@ public class PutUserLoginCommandHandler : IRequestHandler<PutUserLoginCommand, P
 	/// <inheritdoc/>
 	public async Task<PutUserLoginResponse> Handle(PutUserLoginCommand request, CancellationToken cancellationToken)
 	{
-		var userAccount = await _context.Users
+		var user = await _context.Users
 			.Include(x => x.RefreshTokens)
 			.FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken)
 			?? throw new EntityNotFoundProblem<User>(request.Id);
 
-		_authorizationService.CheckUserPermissionRule(userAccount);
+		_authorizationService.CheckUserPermissionRule(user);
 
 		var isNewLoginUnique = await _context.Users
 			.AllAsync(x => x.Login != request.NewLogin, cancellationToken);
@@ -50,17 +50,17 @@ public class PutUserLoginCommandHandler : IRequestHandler<PutUserLoginCommand, P
 			throw new ValidationProblem("Пользователь с таким логином уже существует, " +
 				"новый логин должен быть уникальным");
 
-		userAccount.Login = request.NewLogin;
+		user.Login = request.NewLogin;
 
-		userAccount.RevokeAllRefreshTokens();
+		user.RevokeAllRefreshTokens();
 		string refreshToken = _tokenService.CreateRefreshToken();
-		userAccount.AddRefreshToken(new RefreshToken(refreshToken, userAccount));
+		user.AddRefreshToken(new RefreshToken(refreshToken, user));
 
 		await _context.SaveChangesAsync(cancellationToken);
 
 		return new PutUserLoginResponse
 		{
-			AccessToken = _tokenService.CreateAccessToken(userAccount),
+			AccessToken = _tokenService.CreateAccessToken(user),
 			RefreshToken = refreshToken,
 		};
 	}

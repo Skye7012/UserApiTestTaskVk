@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using UserApiTestTaskVk.Application.Common.Interfaces;
-using UserApiTestTaskVk.Domain.InitialEntities;
+using UserApiTestTaskVk.Domain.Entities;
 using UserApiTestTaskVk.Infrastructure.Persistence;
 
 namespace UserApiTestTaskVk.Infrastructure.InitExecutors;
@@ -15,6 +15,11 @@ namespace UserApiTestTaskVk.Infrastructure.InitExecutors;
 /// </summary>
 public class DbInitExecutor : IAsyncInitActionExecutor
 {
+	/// <summary>
+	/// Логин пользователя-администратора, который создается автоматически
+	/// </summary>
+	public const string AdminLogin = "Admin";
+
 	private readonly IServiceScopeFactory _scopeFactory;
 	private readonly IWebHostEnvironment _environment;
 	private readonly IConfiguration _configuration;
@@ -59,7 +64,7 @@ public class DbInitExecutor : IAsyncInitActionExecutor
 
 
 		var isAdminExists = await db.Users
-			.AnyAsync(u => u.Login == AdminUser.AdminLogin, cancellationToken);
+			.AnyAsync(u => u.Login == AdminLogin, cancellationToken);
 
 		if (!isAdminExists)
 		{
@@ -68,9 +73,12 @@ public class DbInitExecutor : IAsyncInitActionExecutor
 				out var passwordHash,
 				out var passwordSalt);
 
-			await db.Users.AddAsync(new AdminUser(
+			await db.Users.AddAsync(new User(
+				login: AdminLogin,
 				passwordHash: passwordHash,
-				passwordSalt: passwordSalt),
+				passwordSalt: passwordSalt,
+				userGroup: db.AdminUserGroup,
+				userState: db.ActiveUserState),
 			cancellationToken);
 
 			await db.SaveChangesAsync(cancellationToken);
