@@ -47,9 +47,7 @@ public class SignInCommandHandler : IRequestHandler<SignInCommand, SignInRespons
 			throw new ValidationProblem("Данные учетные данные были деактивированы");
 
 		if (!_passwordService.VerifyPasswordHash(request.Password, user.PasswordHash, user.PasswordSalt))
-		{
 			throw new ValidationProblem("Неправильный пароль");
-		}
 
 		string refreshToken = _tokenService.CreateRefreshToken();
 		user.AddRefreshToken(new RefreshToken(refreshToken, user));

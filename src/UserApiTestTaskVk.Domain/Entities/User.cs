@@ -15,6 +15,14 @@ public class User : EntityBase
 	public static readonly string RefreshTokensFieldName = nameof(_refreshTokens);
 
 	/// <summary>
+	/// Получить ключ для лока
+	/// </summary>
+	/// <param name="login">Логин</param>
+	/// <returns>Ключ для лока</returns>
+	public static string GetLockKey(string login)
+		=> $"{nameof(User)}:{login}";
+
+	/// <summary>
 	/// Поле для <see cref="Login"/>
 	/// </summary>
 	private string _login = default!;

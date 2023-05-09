@@ -3,13 +3,13 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using UserApiTestTaskVk.Application.Common.Configs;
 using UserApiTestTaskVk.Application.Common.Exceptions;
 using UserApiTestTaskVk.Application.Common.Interfaces;
 using UserApiTestTaskVk.Application.Common.Static;
 using UserApiTestTaskVk.Contracts.Common.Enums;
 using UserApiTestTaskVk.Domain.Entities;
 using UserApiTestTaskVk.Domain.Exceptions;
-using UserApiTestTaskVk.Infrastructure.Configs;
 
 namespace UserApiTestTaskVk.Infrastructure.Services;
 
@@ -82,7 +82,7 @@ public class TokenService : ITokenService
 	}
 
 	/// <inheritdoc/>
-	public async Task<User> ValidateRefreshTokenAndReceiveUserAccount(
+	public async Task<User> ValidateRefreshTokenAndReceiveUserAccountAsync(
 		string refreshToken,
 		CancellationToken cancellationToken = default)
 	{

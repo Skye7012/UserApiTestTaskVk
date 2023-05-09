@@ -1,15 +1,17 @@
 using System.Data;
 using System.Text;
 using HostInitActions;
+using Medallion.Threading;
+using Medallion.Threading.Postgres;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
+using UserApiTestTaskVk.Application.Common.Configs;
 using UserApiTestTaskVk.Application.Common.Extensions;
 using UserApiTestTaskVk.Application.Common.Interfaces;
-using UserApiTestTaskVk.Infrastructure.Configs;
 using UserApiTestTaskVk.Infrastructure.InitExecutors;
 using UserApiTestTaskVk.Infrastructure.Persistence;
 using UserApiTestTaskVk.Infrastructure.Services;
@@ -30,7 +32,8 @@ public static class InfrastructureServicesConfigurator
 		=> services
 			.AddAuthorization(configuration)
 			.AddDatabase(configuration)
-			.AddInitExecutors();
+			.AddInitExecutors()
+			.AddDistributedLockProvider(configuration);
 
 	/// <summary>
 	/// Сконфигурировать сервисы авторизации
@@ -108,5 +111,22 @@ public static class InfrastructureServicesConfigurator
 			.AddInitActionExecutor<DbInitExecutor>();
 
 		return services;
+	}
+
+	/// <summary>
+	/// Сконфигурировать провайдер локов
+	/// </summary>
+	/// <param name="services">Сервисы</param>
+	/// <param name="configuration">Конфигурации приложения</param>
+	private static IServiceCollection AddDistributedLockProvider(this IServiceCollection services, IConfiguration configuration)
+	{
+		var lockDelaysConfig = services.Configure<LockDelaysConfig>(
+			configuration.GetSection(JwtConfig.ConfigSectionName));
+
+		return services.AddSingleton<IDistributedLockProvider>(sp =>
+		{
+			var dbConnection = sp.GetRequiredService<IDbConnection>();
+			return new PostgresDistributedSynchronizationProvider(dbConnection);
+		});
 	}
 }

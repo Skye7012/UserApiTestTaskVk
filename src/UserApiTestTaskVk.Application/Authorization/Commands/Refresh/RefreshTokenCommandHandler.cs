@@ -29,7 +29,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
 	/// <inheritdoc/>
 	public async Task<RefreshTokenResponse> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
 	{
-		var userAccount = await _tokenService.ValidateRefreshTokenAndReceiveUserAccount(
+		var userAccount = await _tokenService.ValidateRefreshTokenAndReceiveUserAccountAsync(
 			request.RefreshToken,
 			cancellationToken);
 
@@ -41,7 +41,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
 		return new RefreshTokenResponse()
 		{
 			AccessToken = _tokenService.CreateAccessToken(userAccount),
-			RefreshToken = _tokenService.CreateRefreshToken(),
+			RefreshToken = refreshToken,
 		};
 	}
 }
