@@ -36,7 +36,7 @@ public class RefreshToken : EntityBase, ISoftDeletable
 	/// <summary>
 	/// Идентификатор Пользователя
 	/// </summary>
-	public Guid UserId { get; set; }
+	public Guid UserId { get; protected set; }
 
 	#region navigation Properties
 

@@ -1,8 +1,9 @@
-using System.Data;
 using System.Text.RegularExpressions;
-using Medallion.Threading.Postgres;
+using Medallion.Threading;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using UserApiTestTaskVk.Application.Common.Configs;
 using UserApiTestTaskVk.Application.Common.Interfaces;
 using UserApiTestTaskVk.Contracts.Requests.Authorization.SignUp;
 using UserApiTestTaskVk.Domain.Entities;
@@ -17,34 +18,32 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, SignUpRespons
 {
 	private readonly IApplicationDbContext _context;
 	private readonly IPasswordService _passwordService;
-	private readonly IDbConnection _dbConnection;
+	private readonly IDistributedLockProvider _lockProvider;
+	private readonly LockDelaysConfig _lockDelaysConfing;
 
 	/// <summary>
 	/// Конструктор
 	/// </summary>
 	/// <param name="context">Контекст БД</param>
 	/// <param name="passwordService">Сервис паролей</param>
-	/// <param name="dbConnection"></param>
+	/// <param name="lockProvider">Провайдер локов</param>
+	/// <param name="lockDelaysConfing">Конфигурация для задержек локов</param>
 	public SignUpCommandHandler(
 		IApplicationDbContext context,
 		IPasswordService passwordService,
-		IDbConnection dbConnection)
+		IDistributedLockProvider lockProvider,
+		IOptions<LockDelaysConfig> lockDelaysConfing)
 	{
 		_context = context;
 		_passwordService = passwordService;
-		_dbConnection = dbConnection;
+		_lockProvider = lockProvider;
+		_lockDelaysConfing = lockDelaysConfing.Value;
 	}
 
 	/// <inheritdoc/>
 	public async Task<SignUpResponse> Handle(SignUpCommand request, CancellationToken cancellationToken)
 	{
-		var @lock = new PostgresDistributedLock(
-			new PostgresAdvisoryLockKey(
-				$"user_{request.Login}",
-				allowHashing: true),
-			_dbConnection);
-
-		await using var handle = await @lock.TryAcquireAsync(TimeSpan.Zero, cancellationToken);
+		await using var handle = await _lockProvider.TryAcquireLockAsync(User.GetLockKey(request.Login));
 
 		if (handle == null)
 			throw new ValidationProblem("Пользователь с таким логином уже создается");
@@ -69,7 +68,7 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, SignUpRespons
 
 		await _context.Users.AddAsync(user, cancellationToken);
 
-		await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+		await Task.Delay(_lockDelaysConfing.UserLockDelay, cancellationToken);
 		await _context.SaveChangesAsync(cancellationToken);
 
 		return new SignUpResponse()

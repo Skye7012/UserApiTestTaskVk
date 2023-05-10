@@ -36,7 +36,7 @@ public interface ITokenService
 	/// <param name="refreshToken">Refresh токен</param>
 	/// <param name="cancellationToken">Токен отмены</param>
 	/// <returns>Пользователя, которому принадлежит этот токен</returns>
-	public Task<User> ValidateRefreshTokenAndReceiveUserAccount(
+	public Task<User> ValidateRefreshTokenAndReceiveUserAccountAsync(
 		string refreshToken,
 		CancellationToken cancellationToken = default);
 }

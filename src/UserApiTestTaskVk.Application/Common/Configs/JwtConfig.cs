@@ -1,4 +1,4 @@
-namespace UserApiTestTaskVk.Infrastructure.Configs;
+namespace UserApiTestTaskVk.Application.Common.Configs;
 
 /// <summary>
 /// Конфигурация для JWT

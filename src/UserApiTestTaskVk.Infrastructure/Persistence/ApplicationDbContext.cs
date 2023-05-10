@@ -56,6 +56,14 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 		=> modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
 
 	/// <inheritdoc/>
+	public int SaveChanges(bool withSoftDelete = true, bool acceptAllChangesOnSuccess = true)
+	{
+		HandleSaveChangesLogic(withSoftDelete);
+
+		return base.SaveChanges(acceptAllChangesOnSuccess);
+	}
+
+	/// <inheritdoc/>
 	public async Task<int> SaveChangesAsync(
 		bool withSoftDelete = true,
 		bool acceptAllChangesOnSuccess = true,
