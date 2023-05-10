@@ -24,10 +24,10 @@
 </p>
 
 <div align="center">
-    <a href="https://github.com/Skye7012/ShoesApi/issues">
+    <a href="https://github.com/Skye7012/UserApiTestTaskVk/issues">
         <img src="https://img.shields.io/github/issues-raw/Skye7012/UserApiTestTaskVk" alt="Open Issues"/>
     </a>
-    <a href="https://github.com/Skye7012/ShoesApi/issues?q=is%3Aissue+is%3Aclosed">
+    <a href="https://github.com/Skye7012/UserApiTestTaskVk/issues?q=is%3Aissue+is%3Aclosed">
         <img src="https://img.shields.io/github/issues-closed-raw/Skye7012/UserApiTestTaskVk" alt="Closed Issues"/>
     </a>
 </div>
