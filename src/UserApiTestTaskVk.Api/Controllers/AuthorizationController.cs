@@ -87,7 +87,6 @@ public class AuthorizationController : ControllerBase
 	/// <param name="cancellationToken">Токен отмены</param>
 	/// <returns>Обновленные токены</returns>
 	[HttpPost("Refresh")]
-	[Authorize]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -68,7 +68,7 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, SignUpRespons
 
 		await _context.Users.AddAsync(user, cancellationToken);
 
-		await Task.Delay(_lockDelaysConfing.UserLockDelay, cancellationToken);
+		await Task.Delay(TimeSpan.FromSeconds(_lockDelaysConfing.UserLockDelay), cancellationToken);
 		await _context.SaveChangesAsync(cancellationToken);
 
 		return new SignUpResponse()
