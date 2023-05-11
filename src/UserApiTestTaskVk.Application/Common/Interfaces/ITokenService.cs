@@ -11,9 +11,9 @@ public interface ITokenService
 	/// <summary>
 	/// Создать Access токен
 	/// </summary>
-	/// <param name="userAccount">Пользователь, для которого создается токен</param>
+	/// <param name="user">Пользователь, для которого создается токен</param>
 	/// <returns>Токен</returns>
-	string CreateAccessToken(User userAccount);
+	string CreateAccessToken(User user);
 
 	/// <summary>
 	/// Создать Reresh токен
@@ -28,15 +28,4 @@ public interface ITokenService
 	/// <param name="claims">Клеймы</param>
 	/// <returns>Токен</returns>
 	public string CreateToken(DateTime expires, IEnumerable<Claim>? claims = null);
-
-	/// <summary>
-	/// Провалидировать Refresh токен, и получить пользователя, 
-	/// которому принадлежит этот токен
-	/// </summary>
-	/// <param name="refreshToken">Refresh токен</param>
-	/// <param name="cancellationToken">Токен отмены</param>
-	/// <returns>Пользователя, которому принадлежит этот токен</returns>
-	public Task<User> ValidateRefreshTokenAndReceiveUserAccountAsync(
-		string refreshToken,
-		CancellationToken cancellationToken = default);
 }

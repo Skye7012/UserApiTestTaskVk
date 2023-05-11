@@ -24,6 +24,7 @@ public class UnitTestBase
 	protected UnitTestBase()
 	{
 		DateTimeProvider = Substitute.For<IDateTimeProvider>();
+		TokenService = new TokenServiceSubstitute().Create();
 		PasswordService = new PasswordServiceSubstitute().Create();
 
 		PasswordService.CreatePasswordHash("AdminPassword", out var passwordHash, out var passwordSalt);
@@ -38,7 +39,7 @@ public class UnitTestBase
 
 
 		AuthorizationService = new AuthorizationServiceSubstitute(AdminUser).Create();
-		TokenService = new TokenServiceSubstitute(AdminUser).Create();
+		RefreshTokenValidator = new RefreshTokenValidatorSubstitute(AdminUser).Create();
 
 
 		DistributedLockProvider = Substitute.For<IDistributedLockProvider>();
@@ -62,6 +63,11 @@ public class UnitTestBase
 	/// Сервис JWT токенов для тестов
 	/// </summary>
 	protected ITokenService TokenService { get; }
+
+	/// <summary>
+	/// Валидатор Refresh токенов для тестов
+	/// </summary>
+	protected IRefreshTokenValidator RefreshTokenValidator { get; }
 
 	/// <summary>
 	/// Сервис паролей для тестов
@@ -111,6 +117,9 @@ public class UnitTestBase
 		seedActions?.Invoke(context);
 
 		context.SaveChanges();
+		context.ChangeTracker.Clear();
+		context.AttachInitialEntitiesToContext();
+
 		return context;
 	}
 

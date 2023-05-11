@@ -28,10 +28,8 @@ public class PutUserLoginCommandHandlerTests : UnitTestBase
 
 		using var context = CreateInMemoryContext(x =>
 		{
-			x.RefreshTokens.Add(new RefreshToken(refreshToken, AdminUser));
-			x.RefreshTokens.Add(new RefreshToken(refreshToken, AdminUser));
-			x.SaveChanges();
-			x.Instance.ChangeTracker.Clear();
+			x.RefreshTokens.Add(new RefreshToken(refreshToken + "1", AdminUser));
+			x.RefreshTokens.Add(new RefreshToken(refreshToken + "2", AdminUser));
 		});
 
 		TokenService.ClearReceivedCalls();
@@ -95,18 +93,14 @@ public class PutUserLoginCommandHandlerTests : UnitTestBase
 	[Fact]
 	public async Task PutUserLoginCommand_ShouldThrow_WhenNewLoginIsNotUnique()
 	{
-		using var context = CreateInMemoryContext(x =>
-		{
+		using var context = CreateInMemoryContext(x => 
 			x.Users.Add(new User(
-					"new",
-					new byte[] { 1, 2 },
-					new byte[] { 1, 2 },
-					x.DefaultUserGroup,
-					x.ActiveUserState));
+				"new",
+				new byte[] { 1, 2 },
+				new byte[] { 1, 2 },
+				x.DefaultUserGroup,
+				x.ActiveUserState)));
 
-			x.SaveChanges();
-			x.Instance.ChangeTracker.Clear();
-		});
 
 		var command = new PutUserLoginCommand(AdminUser.Id)
 		{

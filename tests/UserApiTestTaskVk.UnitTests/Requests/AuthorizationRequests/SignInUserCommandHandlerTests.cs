@@ -67,17 +67,39 @@ public class SignInCommandHandlerTests : UnitTestBase
 			Password = AdminUser.Password,
 		};
 
-		using var context = CreateInMemoryContext(x =>
-		{
-			x.Users.Remove(AdminUser);
-			x.SaveChanges();
-		});
+		using var context = CreateInMemoryContext(x => x.Users.Remove(AdminUser));
 
 		var handler = new SignInCommandHandler(context, TokenService, PasswordService);
 		var handle = async () => await handler.Handle(command, default);
 
 		await handle.Should()
 			.ThrowAsync<EntityNotFoundProblem<User>>();
+	}
+
+	/// <summary>
+	/// Должен выкинуть ошибку, когда пользователь деактивирован
+	/// </summary>
+	[Fact]
+	public async Task SignInQueryHandler_ShouldThrow_WhenUserBlocked()
+	{
+		var command = new SignInCommand
+		{
+			Login = AdminUser.Login,
+			Password = AdminUser.Password,
+		};
+
+		using var context = CreateInMemoryContext();
+
+		context.Users.Remove(AdminUser);
+		context.SaveChanges();
+		context.Instance.ChangeTracker.Clear();
+
+		var handler = new SignInCommandHandler(context, TokenService, PasswordService);
+		var handle = async () => await handler.Handle(command, default);
+
+		await handle.Should()
+			.ThrowAsync<ValidationProblem>()
+			.WithMessage("Данные учетные данные были деактивированы");
 	}
 
 	/// <summary>

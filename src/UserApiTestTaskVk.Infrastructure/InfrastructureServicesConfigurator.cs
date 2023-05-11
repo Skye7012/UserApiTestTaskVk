@@ -1,5 +1,4 @@
 using System.Data;
-using System.Text;
 using HostInitActions;
 using Medallion.Threading;
 using Medallion.Threading.Postgres;
@@ -7,7 +6,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using UserApiTestTaskVk.Application.Common.Configs;
 using UserApiTestTaskVk.Application.Common.Extensions;
@@ -51,20 +49,11 @@ public static class InfrastructureServicesConfigurator
 			configuration,
 			JwtConfig.ConfigSectionName);
 
-		var tokenValidationParameters = new TokenValidationParameters
-		{
-			IssuerSigningKey = new SymmetricSecurityKey(
-				Encoding.UTF8.GetBytes(jwtConfig.Key)),
-			ValidIssuer = jwtConfig.Issuer,
-			ValidAudience = jwtConfig.Audience,
-			ValidateIssuerSigningKey = true,
-			ValidateIssuer = true,
-			ValidateAudience = true,
-			ValidateLifetime = true,
-			ClockSkew = TimeSpan.Zero,
-		};
+		var tokenValidationParameters = jwtConfig.BuildTokenValidationParameters();
 
-		services.AddSingleton(tokenValidationParameters);
+		services
+			.AddSingleton(tokenValidationParameters)
+			.AddTransient<IRefreshTokenValidator, RefreshTokenValidator>();
 
 		services
 			.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

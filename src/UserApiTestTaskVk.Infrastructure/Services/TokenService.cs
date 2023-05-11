@@ -1,10 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using UserApiTestTaskVk.Application.Common.Configs;
-using UserApiTestTaskVk.Application.Common.Exceptions;
 using UserApiTestTaskVk.Application.Common.Interfaces;
 using UserApiTestTaskVk.Application.Common.Static;
 using UserApiTestTaskVk.Contracts.Common.Enums;
@@ -18,31 +16,20 @@ namespace UserApiTestTaskVk.Infrastructure.Services;
 /// </summary>
 public class TokenService : ITokenService
 {
-	private readonly IApplicationDbContext _context;
 	private readonly JwtConfig _jwtConfig;
-	private readonly TokenValidationParameters _tokenValidationParameters;
 
 	/// <summary>
 	/// Конструктор
 	/// </summary>
-	/// <param name="dbContext">Контекст БД</param>
 	/// <param name="jwtConfig">Конфигурация для JWT</param>
-	/// <param name="tokenValidationParameters">Параметры валидации токена</param>
-	public TokenService(
-		IApplicationDbContext dbContext,
-		IOptions<JwtConfig> jwtConfig,
-		TokenValidationParameters tokenValidationParameters)
-	{
-		_context = dbContext;
-		_jwtConfig = jwtConfig.Value;
-		_tokenValidationParameters = tokenValidationParameters;
-	}
+	public TokenService(IOptions<JwtConfig> jwtConfig)
+		=> _jwtConfig = jwtConfig.Value;
 
 	/// <inheritdoc/>
 	public string CreateAccessToken(User user)
 	{
 		if (user.UserGroup == null)
-			throw new NotIncludedProblem(nameof(UserGroup.Code));
+			throw new NotIncludedProblem(nameof(User.UserGroup));
 
 		List<Claim> claims = new()
 		{
@@ -79,43 +66,5 @@ public class TokenService : ITokenService
 		var jwt = new JwtSecurityTokenHandler().WriteToken(token);
 
 		return jwt;
-	}
-
-	/// <inheritdoc/>
-	public async Task<User> ValidateRefreshTokenAndReceiveUserAccountAsync(
-		string refreshToken,
-		CancellationToken cancellationToken = default)
-	{
-		var receiveRefreshTokenAndRemoveFromDBAsync = async () =>
-		{
-			var refreshTokenEntity = await _context.RefreshTokens
-				.Include(x => x.User)
-				.FirstOrDefaultAsync(x => x.Token == refreshToken, cancellationToken)
-				?? throw new EntityNotFoundProblem<RefreshToken>(
-					nameof(RefreshToken.Token),
-					refreshToken);
-
-			_context.RefreshTokens.Remove(refreshTokenEntity);
-
-			return refreshTokenEntity;
-		};
-
-		var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
-		try
-		{
-			jwtSecurityTokenHandler.ValidateToken(refreshToken, _tokenValidationParameters, out var _);
-			var refreshTokenEntity = await receiveRefreshTokenAndRemoveFromDBAsync();
-
-			return refreshTokenEntity.RevokedOn != null
-				? throw new ValidationProblem("Refresh токен не активный")
-				: refreshTokenEntity.User!;
-		}
-		catch (Exception exception)
-		{
-			if (exception is SecurityTokenExpiredException expiredException)
-				await receiveRefreshTokenAndRemoveFromDBAsync();
-
-			throw new ValidationProblem("Refresh токен не валидный");
-		}
 	}
 }

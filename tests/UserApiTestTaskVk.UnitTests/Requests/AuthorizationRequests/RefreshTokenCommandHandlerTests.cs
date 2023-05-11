@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using NSubstitute;
 using UserApiTestTaskVk.Application.Authorization.Commands.Refresh;
+using UserApiTestTaskVk.Domain.Entities;
 using Xunit;
 
 namespace UserApiTestTaskVk.UnitTests.Requests.AuthorizationRequests;
@@ -19,19 +20,21 @@ public class RefreshTokenCommandHandlerTests : UnitTestBase
 	public async Task RefreshTokenCommand_ShouldCreateNewTokens_WhenCommandValid()
 	{
 		var accessToken = TokenService.CreateAccessToken(AdminUser);
-		var refreshToken = TokenService.CreateRefreshToken();
+		var oldRefreshToken = "old" + TokenService.CreateRefreshToken();
 		var command = new RefreshTokenCommand
 		{
-			RefreshToken = refreshToken,
+			RefreshToken = oldRefreshToken,
 		};
 
-		using var context = CreateInMemoryContext();
+		using var context = CreateInMemoryContext(x =>
+			x.RefreshTokens.Add(new RefreshToken(oldRefreshToken, AdminUser)));
 
 		TokenService.ClearReceivedCalls();
 
 		var handler = new RefreshTokenCommandHandler(
 			context,
-			TokenService);
+			TokenService,
+			RefreshTokenValidator);
 
 		var response = await handler.Handle(command, default);
 
@@ -39,22 +42,28 @@ public class RefreshTokenCommandHandlerTests : UnitTestBase
 		response.AccessToken.Should().Be(accessToken);
 
 		response.RefreshToken.Should().NotBeNullOrWhiteSpace();
-		response.RefreshToken.Should().Be(refreshToken);
+		response.RefreshToken.Should().NotBe(oldRefreshToken);
 
 		context.Instance.ChangeTracker.Clear();
+		var revokedRefreshToken = context.RefreshTokens
+			.FirstOrDefault(x => x.Token == oldRefreshToken);
+
+		revokedRefreshToken.Should().NotBeNull();
+		revokedRefreshToken!.RevokedOn.Should().BeNull();
+
 		var createdRefreshToken = context.RefreshTokens
-			.FirstOrDefault(x => x.Token == refreshToken);
+			.FirstOrDefault(x => x.Token == response.RefreshToken);
 
 		createdRefreshToken.Should().NotBeNull();
 		createdRefreshToken!.RevokedOn.Should().BeNull();
 
-		await TokenService.Received(1)
-			.ValidateRefreshTokenAndReceiveUserAccountAsync(refreshToken, default);
+		await RefreshTokenValidator.Received(1)
+			.ValidateAndReceiveUserAsync(context, oldRefreshToken, default);
 
 		TokenService.Received(1)
 			.CreateRefreshToken();
 
 		TokenService.Received(1)
-			.CreateAccessToken(AdminUser);
+			.CreateAccessToken(Arg.Is<User>(x => x.Id == AdminUser.Id));
 	}
 }

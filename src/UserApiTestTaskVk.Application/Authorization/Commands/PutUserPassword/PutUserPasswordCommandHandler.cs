@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UserApiTestTaskVk.Application.Common.Exceptions;
@@ -49,6 +50,9 @@ public class PutUserPasswordCommandHandler : IRequestHandler<PutUserPasswordComm
 
 		if (!_passwordService.VerifyPasswordHash(request.OldPassword, user.PasswordHash, user.PasswordSalt))
 			throw new ValidationProblem("Введен неверный текущий пароль пользователя");
+
+		if (!Regex.IsMatch(request.NewPassword, @"^[a-zA-Z0-9]+$"))
+			throw new ValidationProblem("Для пароля запрещены все символы кроме латинских букв и цифр");
 
 		_passwordService.CreatePasswordHash(request.NewPassword, out byte[] passwordHash, out byte[] passwordSalt);
 

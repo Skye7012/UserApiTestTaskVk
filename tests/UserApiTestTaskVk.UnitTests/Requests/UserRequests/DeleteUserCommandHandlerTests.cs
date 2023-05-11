@@ -41,11 +41,7 @@ public class DeleteUserCommandHandlerTests : UnitTestBase
 	[Fact]
 	public async Task DeleteUserCommand_ShouldThrow_WhenUserNotFound()
 	{
-		using var context = CreateInMemoryContext(x =>
-		{
-			x.Users.Remove(AdminUser);
-			x.SaveChanges();
-		});
+		using var context = CreateInMemoryContext(x => x.Users.Remove(AdminUser));
 
 		var handler = new DeleteUserCommandHandler(context, AuthorizationService);
 		var handle = async () => await handler.Handle(new DeleteUserCommand(AdminUser.Id), default);
