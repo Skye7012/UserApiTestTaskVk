@@ -107,12 +107,7 @@ public class UnitTestBase
 				.Options,
 			DateTimeProvider);
 
-		context.Database.EnsureCreated();
-
-		AdminUser.UserGroup = context.AdminUserGroup;
-		AdminUser.UserState = context.ActiveUserState;
-
-		context.Users.Add(AdminUser);
+		InitializeDB(context);
 
 		seedActions?.Invoke(context);
 
@@ -121,6 +116,22 @@ public class UnitTestBase
 		context.AttachInitialEntitiesToContext();
 
 		return context;
+	}
+
+	/// <summary>
+	/// Инициализировать БД начальными константными сущностями и пользователем-администратором
+	/// </summary>
+	/// <param name="context">Контекст БД</param>
+	private void InitializeDB(ApplicationDbContext context)
+	{
+		// Инициализация seeded сущностей из миграций
+		context.Database.EnsureCreated();
+
+		AdminUser.UserGroup = context.AdminUserGroup;
+		AdminUser.UserState = context.ActiveUserState;
+
+		context.Users.Add(AdminUser);
+		context.SaveChanges();
 	}
 
 	/// <summary>

@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using NSubstitute;
@@ -46,10 +47,10 @@ public class GetUserByIdQueryHandlerTests : UnitTestBase
 	[Fact]
 	public async Task GetUserByIdQueryHandler_ShouldThrow_WhenUserNotFound()
 	{
-		using var context = CreateInMemoryContext(x => x.Users.Remove(AdminUser));
+		using var context = CreateInMemoryContext();
 
 		var handler = new GetUserByIdQueryHandler(context, AuthorizationService);
-		var handle = async () => await handler.Handle(new GetUserByIdQuery(AdminUser.Id), default);
+		var handle = async () => await handler.Handle(new GetUserByIdQuery(Guid.NewGuid()), default);
 
 		await handle.Should()
 			.ThrowAsync<EntityNotFoundProblem<User>>();

@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -41,10 +42,10 @@ public class DeleteUserCommandHandlerTests : UnitTestBase
 	[Fact]
 	public async Task DeleteUserCommand_ShouldThrow_WhenUserNotFound()
 	{
-		using var context = CreateInMemoryContext(x => x.Users.Remove(AdminUser));
+		using var context = CreateInMemoryContext();
 
 		var handler = new DeleteUserCommandHandler(context, AuthorizationService);
-		var handle = async () => await handler.Handle(new DeleteUserCommand(AdminUser.Id), default);
+		var handle = async () => await handler.Handle(new DeleteUserCommand(Guid.NewGuid()), default);
 
 		await handle.Should()
 			.ThrowAsync<EntityNotFoundProblem<User>>();

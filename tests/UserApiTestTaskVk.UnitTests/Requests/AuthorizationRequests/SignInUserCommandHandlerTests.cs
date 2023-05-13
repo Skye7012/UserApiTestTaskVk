@@ -63,11 +63,11 @@ public class SignInCommandHandlerTests : UnitTestBase
 	{
 		var command = new SignInCommand
 		{
-			Login = AdminUser.Login,
+			Login = "NotExistingLogin",
 			Password = AdminUser.Password,
 		};
 
-		using var context = CreateInMemoryContext(x => x.Users.Remove(AdminUser));
+		using var context = CreateInMemoryContext();
 
 		var handler = new SignInCommandHandler(context, TokenService, PasswordService);
 		var handle = async () => await handler.Handle(command, default);
@@ -88,11 +88,7 @@ public class SignInCommandHandlerTests : UnitTestBase
 			Password = AdminUser.Password,
 		};
 
-		using var context = CreateInMemoryContext();
-
-		context.Users.Remove(AdminUser);
-		context.SaveChanges();
-		context.Instance.ChangeTracker.Clear();
+		using var context = CreateInMemoryContext(x => x.Users.Remove(AdminUser));
 
 		var handler = new SignInCommandHandler(context, TokenService, PasswordService);
 		var handle = async () => await handler.Handle(command, default);
