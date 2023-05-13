@@ -18,21 +18,13 @@ public class GetUsersQueryHandlerTests : UnitTestBase
 	[Fact]
 	public async Task GetUsersQueryHandler_ShouldReturnUserInfo_IfTheyExists()
 	{
-		using var context = CreateInMemoryContext(x =>
-		{
-			var oldUsers = x.Users.ToList();
-			x.Users.RemoveRange(oldUsers);
-
+		using var context = CreateInMemoryContext(x => 
 			x.Users.Add(new User(
 				"new",
 				new byte[] { 1, 2 },
 				new byte[] { 1, 2 },
 				x.DefaultUserGroup,
-				x.ActiveUserState));
-
-			x.SaveChanges();
-			x.Instance.ChangeTracker.Clear();
-		});
+				x.ActiveUserState)));
 
 		var handler = new GetUsersQueryHandler(context);
 		var result = await handler.Handle(new GetUsersQuery(), default);
@@ -41,7 +33,8 @@ public class GetUsersQueryHandlerTests : UnitTestBase
 		result.TotalCount.Should().Be(2);
 
 		result.Items.Should().NotBeNullOrEmpty();
-		var adminUser = result.Items!.First();
+		var adminUser = result.Items!
+			.First(x => x.Id == AdminUser.Id);
 
 		adminUser.Id.Should().Be(AdminUser.Id);
 		adminUser.Login.Should().Be(AdminUser.Login);

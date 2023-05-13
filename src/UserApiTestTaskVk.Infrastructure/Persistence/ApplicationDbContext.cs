@@ -156,7 +156,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 	/// <summary>
 	/// Загрузить в контекст начальные константные сущности
 	/// </summary>
-	private void AttachInitialEntitiesToContext()
+	public void AttachInitialEntitiesToContext()
 	{
 		UserGroups.AttachRange(AdminUserGroup, DefaultUserGroup);
 		UserStates.AttachRange(ActiveUserState, BlockedUserState);

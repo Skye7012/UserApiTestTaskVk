@@ -72,9 +72,7 @@ API задокументирован с помощью `Swagger`
 В качестве ORM используется `Entity Framework Core`, в качестве СУБД `PostgreSql`  
 Аутентификация реализована через [`JWT`](https://jwt.io/) токены  
   
-Есть модульные и интеграционные тесты  
-Тесты написаны с помощью `xUnit` и [`FluentAssertions`](https://github.com/fluentassertions/fluentassertions)  
-Интеграционные тесты реализованы с помощью [`testcontainters`](https://github.com/testcontainers/testcontainers-dotnet) (и [`respawn`](https://github.com/jbogard/Respawn)) (поэтому нужен докер для их прогонки)  
+Написаны модульные тесты с помощью `xUnit` и [`FluentAssertions`](https://github.com/fluentassertions/fluentassertions)  
 
 
 

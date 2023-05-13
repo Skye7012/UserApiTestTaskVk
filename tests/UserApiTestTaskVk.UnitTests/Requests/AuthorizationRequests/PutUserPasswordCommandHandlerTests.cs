@@ -28,10 +28,8 @@ public class PutUserPasswordCommandHandlerTests : UnitTestBase
 
 		using var context = CreateInMemoryContext(x =>
 		{
-			x.RefreshTokens.Add(new RefreshToken(refreshToken, AdminUser));
-			x.RefreshTokens.Add(new RefreshToken(refreshToken, AdminUser));
-			x.SaveChanges();
-			x.Instance.ChangeTracker.Clear();
+			x.RefreshTokens.Add(new RefreshToken(refreshToken + "1", AdminUser));
+			x.RefreshTokens.Add(new RefreshToken(refreshToken + "2", AdminUser));
 		});
 
 		TokenService.ClearReceivedCalls();
@@ -125,5 +123,27 @@ public class PutUserPasswordCommandHandlerTests : UnitTestBase
 
 		await handle.Should()
 			.ThrowAsync<ValidationProblem>("Введен неверный текущий пароль пользователя");
+	}
+
+	/// <summary>
+	/// Должен выкинуть ошибку, когда указан невалидный пароль
+	/// </summary>
+	[Fact]
+	public async Task SignUpQueryHandler_ShouldThrow_WhenPasswordIsNotValid()
+	{
+		using var context = CreateInMemoryContext();
+
+		var command = new PutUserPasswordCommand(AdminUser.Id)
+		{
+			OldPassword = AdminUser.Password,
+			NewPassword = "Невалидный пароль",
+		};
+
+		var handler = new PutUserPasswordCommandHandler(context, AuthorizationService, PasswordService, TokenService);
+		var handle = async () => await handler.Handle(command, default);
+
+		await handle.Should()
+			.ThrowAsync<ValidationProblem>()
+			.WithMessage("Для пароля запрещены все символы кроме латинских букв и цифр");
 	}
 }

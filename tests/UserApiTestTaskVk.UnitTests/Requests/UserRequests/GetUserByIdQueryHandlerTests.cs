@@ -46,11 +46,7 @@ public class GetUserByIdQueryHandlerTests : UnitTestBase
 	[Fact]
 	public async Task GetUserByIdQueryHandler_ShouldThrow_WhenUserNotFound()
 	{
-		using var context = CreateInMemoryContext(x =>
-		{
-			x.Users.Remove(AdminUser);
-			x.SaveChanges();
-		});
+		using var context = CreateInMemoryContext(x => x.Users.Remove(AdminUser));
 
 		var handler = new GetUserByIdQueryHandler(context, AuthorizationService);
 		var handle = async () => await handler.Handle(new GetUserByIdQuery(AdminUser.Id), default);
